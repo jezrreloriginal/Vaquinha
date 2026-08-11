@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta PIX da Galera</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 25px; margin: 20px 0; }
+        .progress-bar { height: 24px; background-color: #00b16a; border-radius: 25px; width: 0%; transition: width 0.5s ease-in-out; }
+        .lists { display: flex; justify-content: space-between; text-align: left; margin-top: 20px; gap: 15px; }
+        @media (max-width: 480px) { .lists { flex-direction: column; } .list-box { width: 100%; box-sizing: border-box; } }
+        .list-box { width: 50%; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .paid { color: #00b16a; font-weight: bold; }
+        .pending { color: #f39c12; }
+        
+        /* Estilos do PIX */
+        .qr-code { max-width: 250px; width: 100%; border-radius: 10px; margin: 15px auto; display: block; border: 1px solid #ddd; }
+        .chave-pix { background: #eee; padding: 12px; border-radius: 5px; font-family: monospace; font-size: 13px; word-break: break-all; border: 1px dashed #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Nossa Meta: R$ <span id="meta">1.044,56</span></h2>
+    <h3>Arrecadado: R$ <span id="arrecadado">0,00</span></h3>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+    
+    <p><strong>Previsão de encerramento:</strong> 15/09/2026</p>
+
+    <div>
+        <p>Faça o PIX de <strong>R$ 130,57</strong> lendo o QR Code ou copiando a chave abaixo:</p>
+        
+        <!-- Imagem do QR Code -->
+        <img src="WhatsApp Image 2026-08-11 at 14.45.12.jpeg" alt="QR Code PIX" class="qr-code">
+        
+        <!-- Código Copia e Cola -->
+        <p class="chave-pix">00020101021126580014BR.GOV.BCB.PIX0136b644cb9b-24d7-4b73-a202-e8e5c03f97c55204000053039865802BR5925Abner Jezrrel Lopes Dos S6009SAO PAULO62080504daqr63044AD3</p>
+    </div>
+
+    <div class="lists">
+        <div class="list-box">
+            <h4>✅ Já Pagaram</h4>
+            <ul id="lista-pagos">Carregando...</ul>
+        </div>
+        <div class="list-box">
+            <h4>⏳ Faltam Pagar</h4>
+            <ul id="lista-pendentes">Carregando...</ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Link do CSV gerado pelo Google Planilhas
+    const linkCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQSPyt27sRgkoo2_TnrcKaSuMVIabS1_4_-Ti_zHe0h8vERWprpe4sw1qrKyJyC4TlZHHSs5R_bBtY8/pub?output=csv";
+    
+    // Novos valores configurados
+    const valorPorPessoa = 130.57;
+    const meta = 1044.56;
+
+    // Função que busca os dados da planilha e atualiza o site
+    async function carregarDados() {
+        try {
+            const resposta = await fetch(linkCSV + "&t=" + new Date().getTime());
+            const textoCsv = await resposta.text();
+            
+            const linhas = textoCsv.split('\n').slice(1);
+            
+            const listaPagos = document.getElementById('lista-pagos');
+            const listaPendentes = document.getElementById('lista-pendentes');
+            listaPagos.innerHTML = '';
+            listaPendentes.innerHTML = '';
+            
+            let totalArrecadado = 0;
+
+            linhas.forEach(linha => {
+                const [nome, pagou] = linha.split(',');
+                
+                if (!nome) return;
+
+                const li = document.createElement('li');
+                li.textContent = nome.trim();
+
+                if (pagou && pagou.trim().toUpperCase() === "SIM") {
+                    li.classList.add('paid');
+                    listaPagos.appendChild(li);
+                    totalArrecadado += valorPorPessoa;
+                } else {
+                    li.classList.add('pending');
+                    listaPendentes.appendChild(li);
+                }
+            });
+
+            // Formata o valor arrecadado para o formato brasileiro (ex: 130,57)
+            document.getElementById('arrecadado').textContent = totalArrecadado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Calcula a porcentagem da barra de progresso
+            let porcentagem = (totalArrecadado / meta) * 100;
+            if (porcentagem > 100) porcentagem = 100;
+            
+            setTimeout(() => {
+                document.getElementById('progress').style.width = porcentagem + '%';
+            }, 100);
+
+        } catch (erro) {
+            console.error("Erro ao ler a planilha:", erro);
+        }
+    }
+
+    carregarDados();
+</script>
+
+</body>
+</html>
